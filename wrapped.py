@@ -2,7 +2,7 @@ import csv
 import requests
 import json
 from datetime import datetime
-from collections import defaultdict
+from collections import defaultdict, Counter
 from secrets import OMDB_API_KEY  # Import the API key from secrets.py
 
 CACHE_FILE = 'movie_cache.json'
@@ -19,8 +19,8 @@ def save_cache(cache):
         json.dump(cache, f)
 
 def get_movie_details(title, cache):
-    if title in cache:
-        return cache[title]['genres'], cache[title]['runtime'], cache[title]['year']
+    if title in cache and all(key in cache[title] for key in ['genres', 'runtime', 'year', 'actors', 'director']):
+        return cache[title]['genres'], cache[title]['runtime'], cache[title]['year'], cache[title]['actors'], cache[title]['director']
     
     url = f"https://www.omdbapi.com/?t={title}&apikey={OMDB_API_KEY}"
     response = requests.get(url)
@@ -28,12 +28,14 @@ def get_movie_details(title, cache):
         data = response.json()
         if data.get('Error') == 'Request limit reached!':
             raise Exception('API request limit reached!')
-        if 'Genre' in data and 'Runtime' in data and 'Year' in data:
+        if 'Genre' in data and 'Runtime' in data and 'Year' in data and 'Actors' in data and 'Director' in data:
             genres = data['Genre'].split(', ')
             runtime = data['Runtime']
             year = data['Year']
-            cache[title] = {'genres': genres, 'runtime': runtime, 'year': year}
-            return genres, runtime, year
+            actors = [actor for actor in data['Actors'].split(', ') if actor != "N/A"]
+            director = data['Director'] if data['Director'] != "N/A" else None
+            cache[title] = {'genres': genres, 'runtime': runtime, 'year': year, 'actors': actors, 'director': director}
+            return genres, runtime, year, actors, director
         else:
             raise Exception(f"Details not found for {title}")
     elif response.status_code == 401:
@@ -45,6 +47,9 @@ def get_movies_from_2024_sorted_by_rating(csv_file_path, cache):
     movies = []
     total_runtime_minutes = 0
     seen_movies = set()
+    actors_counter = Counter()
+    directors_counter = Counter()
+    genres_set = set()
     with open(csv_file_path, mode='r', newline='', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
@@ -57,12 +62,16 @@ def get_movies_from_2024_sorted_by_rating(csv_file_path, cache):
                         if title in seen_movies:
                             continue
                         seen_movies.add(title)
-                        genres, runtime, year = get_movie_details(title, cache)
+                        genres, runtime, year, actors, director = get_movie_details(title, cache)
                         if genres and runtime:
                             runtime_minutes = int(runtime.split(' ')[0]) if runtime != "N/A" else 0
                             total_runtime_minutes += runtime_minutes
                             for genre in genres:
                                 movies.append((title, rating, genre, runtime_minutes, year))  # (movie title, rating, genre, runtime_minutes, year)
+                                genres_set.add(genre)
+                            actors_counter.update(actors)
+                            if director:
+                                directors_counter.update([director])
                 except ValueError:
                     continue
                 except Exception as e:
@@ -70,7 +79,7 @@ def get_movies_from_2024_sorted_by_rating(csv_file_path, cache):
                     break
     # Sort movies by rating in descending order
     movies.sort(key=lambda x: x[1], reverse=True)
-    return movies, total_runtime_minutes
+    return movies, total_runtime_minutes, actors_counter, directors_counter, genres_set
 
 def get_favorite_movies_by_genre(movies):
     genre_dict = defaultdict(list)
@@ -87,7 +96,7 @@ def get_favorite_movies_by_genre(movies):
 if __name__ == "__main__":
     cache = load_cache()
     csv_file_path = '/Users/atrichatterjee/src/letterboxd-wrapped/diary.csv'
-    movies_2024_sorted, total_runtime_minutes = get_movies_from_2024_sorted_by_rating(csv_file_path, cache)
+    movies_2024_sorted, total_runtime_minutes, actors_counter, directors_counter, genres_set = get_movies_from_2024_sorted_by_rating(csv_file_path, cache)
     save_cache(cache)
     
     top_5_movies = []
@@ -125,13 +134,29 @@ if __name__ == "__main__":
         print(f"{movie}: {rating}")
     
     favorite_movies_by_genre = get_favorite_movies_by_genre(movies_2024_sorted)
-    specified_genres = ["Action", "Comedy", "Drama", "Horror", "Romance", "Sci-Fi", "Sports"]
-    print("\nFavorite movies by specified genres in 2024:")
-    for genre in specified_genres:
+    print("\nFavorite movies by genres in 2024:")
+    for genre in genres_set:
         if genre in favorite_movies_by_genre:
             movie, rating = favorite_movies_by_genre[genre]
             print(f"{genre}: {movie} ({rating})")
         else:
             print(f"{genre}: No movies found")
+    
+    
+    top_5_actors = actors_counter.most_common(5)
+    top_5_directors = directors_counter.most_common(6) 
+    
+    print("\nTop 5 actors in 2024:")
+    for actor, count in top_5_actors:
+        print(f"{actor}: {count} movies")
+    
+    print("\nTop 5 directors in 2024:")
+    count = 0
+    for director, count in top_5_directors:
+        if director != "N/A":
+            print(f"{director}: {count} movies")
+            count += 1
+        if count == 5:
+            break
     
     print(f"\nTotal runtime of movies watched in 2024: {total_runtime_minutes} minutes")
