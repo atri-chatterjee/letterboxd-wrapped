@@ -5,17 +5,19 @@ from datetime import datetime
 from collections import defaultdict, Counter
 from secrets import OMDB_API_KEY  # Import the API key from secrets.py
 
-CACHE_FILE = 'movie_cache.json'
+def load_config():
+    with open('config.json', 'r') as f:
+        return json.load(f)
 
-def load_cache():
+def load_cache(cache_file):
     try:
-        with open(CACHE_FILE, 'r') as f:
+        with open(cache_file, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
         return {}
 
-def save_cache(cache):
-    with open(CACHE_FILE, 'w') as f:
+def save_cache(cache, cache_file):
+    with open(cache_file, 'w') as f:
         json.dump(cache, f)
 
 def get_movie_details(title, cache):
@@ -94,10 +96,13 @@ def get_favorite_movies_by_genre(movies):
     return favorite_movies_by_genre
 
 if __name__ == "__main__":
-    cache = load_cache()
-    csv_file_path = '/Users/atrichatterjee/src/letterboxd-wrapped/diary.csv'
+    config = load_config()
+    cache_file = config['cache_file']
+    csv_file_path = config['csv_file_path']
+    
+    cache = load_cache(cache_file)
     movies_2024_sorted, total_runtime_minutes, actors_counter, directors_counter, genres_set = get_movies_from_2024_sorted_by_rating(csv_file_path, cache)
-    save_cache(cache)
+    save_cache(cache, cache_file)
     
     top_5_movies = []
     least_5_movies = []
@@ -142,9 +147,8 @@ if __name__ == "__main__":
         else:
             print(f"{genre}: No movies found")
     
-    
     top_5_actors = actors_counter.most_common(5)
-    top_5_directors = directors_counter.most_common(6) 
+    top_5_directors = directors_counter.most_common(6)  
     
     print("\nTop 5 actors in 2024:")
     for actor, count in top_5_actors:
