@@ -1,7 +1,7 @@
 # letterboxd-wrapped
 For letterboxd wrapped (So you don't have to pay for premium)
 
-Uses OMDB_API (To creat key use link below and create secrets.py file where OMDB_API_KEY = "API_KEY")
+Uses OMDB_API (To create key use link below and create a secrets.py file where OMDB_API_KEY = "YOUR_API_KEY")
 
 https://www.omdbapi.com/apikey.aspx
 
