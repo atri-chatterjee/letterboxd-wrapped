@@ -1,7 +1,7 @@
 import csv
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict, Counter
 from secrets import OMDB_API_KEY  # Import the API key from secrets.py
 
@@ -52,6 +52,8 @@ def get_movies_from_2024_sorted_by_rating(csv_file_path, cache):
     actors_counter = Counter()
     directors_counter = Counter()
     genres_set = set()
+    week_counter = Counter()
+    day_counter = Counter()
     with open(csv_file_path, mode='r', newline='', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
@@ -74,6 +76,9 @@ def get_movies_from_2024_sorted_by_rating(csv_file_path, cache):
                             actors_counter.update(actors)
                             if director:
                                 directors_counter.update([director])
+                            week_start = date - timedelta(days=date.weekday())
+                            week_counter[week_start] += 1
+                            day_counter[date.strftime('%A')] += 1
                 except ValueError:
                     continue
                 except Exception as e:
@@ -81,7 +86,9 @@ def get_movies_from_2024_sorted_by_rating(csv_file_path, cache):
                     break
     # Sort movies by rating in descending order
     movies.sort(key=lambda x: x[1], reverse=True)
-    return movies, total_runtime_minutes, actors_counter, directors_counter, genres_set
+    most_watched_week = week_counter.most_common(1)[0] if week_counter else None
+    most_watched_day = day_counter.most_common(1)[0] if day_counter else None
+    return movies, total_runtime_minutes, actors_counter, directors_counter, genres_set, most_watched_week, most_watched_day
 
 def get_favorite_movies_by_genre(movies):
     genre_dict = defaultdict(list)
@@ -101,7 +108,7 @@ if __name__ == "__main__":
     csv_file_path = config['csv_file_path']
     
     cache = load_cache(cache_file)
-    movies_2024_sorted, total_runtime_minutes, actors_counter, directors_counter, genres_set = get_movies_from_2024_sorted_by_rating(csv_file_path, cache)
+    movies_2024_sorted, total_runtime_minutes, actors_counter, directors_counter, genres_set, most_watched_week, most_watched_day = get_movies_from_2024_sorted_by_rating(csv_file_path, cache)
     save_cache(cache, cache_file)
     
     top_5_movies = []
@@ -148,7 +155,7 @@ if __name__ == "__main__":
             print(f"{genre}: No movies found")
     
     top_5_actors = actors_counter.most_common(5)
-    top_5_directors = directors_counter.most_common(6)  
+    top_5_directors = directors_counter.most_common(6)  # Get top 6 to account for possible "N/A"
     
     print("\nTop 5 actors in 2024:")
     for actor, count in top_5_actors:
@@ -162,5 +169,18 @@ if __name__ == "__main__":
             count += 1
         if count == 5:
             break
+    
+    if most_watched_week:
+        week_start, count = most_watched_week
+        week_end = week_start + timedelta(days=6)
+        print(f"\nWeek with most watched movies: {week_start.strftime('%Y-%m-%d')} to {week_end.strftime('%Y-%m-%d')} with {count} movies")
+    else:
+        print("\nNo movies watched in 2024")
+    
+    if most_watched_day:
+        day, count = most_watched_day
+        print(f"\nDay of the week with most movies watched: {day} with {count} movies")
+    else:
+        print("\nNo movies watched in 2024")
     
     print(f"\nTotal runtime of movies watched in 2024: {total_runtime_minutes} minutes")
