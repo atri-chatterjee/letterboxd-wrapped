@@ -1,0 +1,1 @@
+OMDB_API_KEY = '(Your key)'  # Replace with your actual OMDB API key

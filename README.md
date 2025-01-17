@@ -5,6 +5,7 @@ https://letterboxd.com/settings/data/
 Then in your downloads unzip file and find diary.csv. Put it in this repo and replace mine. 
 
 Uses OMDB_API (To create key use link below and create a secrets.py file where OMDB_API_KEY = 'YOUR_API_KEY')
+There is a secrets_template.py where you can put the key in and rename to secrets.py 
 
 https://www.omdbapi.com/apikey.aspx
 
