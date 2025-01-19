@@ -7,6 +7,12 @@
 </head>
 <body>
     <h1>Letterboxd Wrapped</h1>
+    <div id="blurb">
+        <p>To get letterboxd csv go to the link and click export data. <a href="https://letterboxd.com/settings/data/" target="_blank">https://letterboxd.com/settings/data/</a></p>
+        <p>Then in your downloads unzip file and find diary.csv.</p>
+        <p>Click choose file and upload diary.csv</p>
+        <p>Then click Letterboxd Wrap Me.</p>
+    </div>
     <form id="upload-form" enctype="multipart/form-data">
         <input type="file" name="file" id="file-input"><br><br>
         <button type="submit">Letterboxd Wrap Me</button>
@@ -28,6 +34,8 @@
             .then(data => {
                 var output = document.getElementById('output');
                 output.innerHTML = data.replace(/\n/g, '<br>');
+                document.getElementById('blurb').style.display = 'none';
+                document.getElementById('upload-form').style.display = 'none';
             })
             .catch(error => console.error('Error:', error));
         });
