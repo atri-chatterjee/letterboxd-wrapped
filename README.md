@@ -18,11 +18,3 @@ To run
 ``` console 
 python app.py 
 ```
-
-To get letterboxd csv go to the link and click export data. 
-https://letterboxd.com/settings/data/
-Then in your downloads unzip file and find diary.csv.
-
-Click choose file and upload diary.csv 
-
-Then click Letterboxd Wrap Me
