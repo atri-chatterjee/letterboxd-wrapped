@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Diary</title>
+    <title>Letterboxd Wrapped</title>
 </head>
 <body>
-    <h1>Upload your diary.csv</h1>
+    <h1>Letterboxd Wrapped</h1>
     <form id="upload-form" enctype="multipart/form-data">
-        <input type="file" name="file" id="file-input">
-        <button type="submit">Upload</button>
+        <input type="file" name="file" id="file-input"><br><br>
+        <button type="submit">Letterboxd Wrap Me</button>
     </form>
+    <br>
     <div id="output"></div>
     <script>
         document.getElementById('upload-form').addEventListener('submit', function(event) {
