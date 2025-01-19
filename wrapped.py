@@ -3,7 +3,7 @@ import requests
 import json
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
-from secrets import OMDB_API_KEY  # Import the API key from secrets.py
+from my_secrets import OMDB_API_KEY  # Import the API key from my_secrets.py
 
 def load_config():
     with open('config.json', 'r') as f:
