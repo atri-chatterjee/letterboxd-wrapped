@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letterboxd Wrapped</title>
+</head>
+<body>
+    <h1>Letterboxd Wrapped</h1>
+    <div id="blurb">
+        <p>To get letterboxd csv go to the link and click export data. <a href="https://letterboxd.com/settings/data/" target="_blank">https://letterboxd.com/settings/data/</a></p>
+        <p>Then in your downloads unzip file and find diary.csv.</p>
+        <p>Click choose file and upload diary.csv</p>
+        <p>Then click Letterboxd Wrap Me.</p>
+    </div>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" name="file" id="file-input"><br><br>
+        <button type="submit">Letterboxd Wrap Me</button>
+    </form>
+    <br>
+    <div id="output"></div>
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData();
+            var fileInput = document.getElementById('file-input');
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                var output = document.getElementById('output');
+                output.innerHTML = data.replace(/\n/g, '<br>');
+                document.getElementById('blurb').style.display = 'none';
+                document.getElementById('upload-form').style.display = 'none';
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
